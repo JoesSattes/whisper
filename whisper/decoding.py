@@ -291,7 +291,7 @@ class BeamSearchDecoderWithLM(TokenDecoder):
         self.max_candidates: int = round(beam_size * self.patience)
         self.finished_sequences = None
         self.lm: "kenlm.Model" = kenlm.Model(lm_path) if lm_path else None
-        self.tokenizer = get_tokenizer('vi')
+        self.tokenizer = get_tokenizer('th')
         self.lm_alpha = lm_alpha
         self.lm_beta = lm_beta
 
