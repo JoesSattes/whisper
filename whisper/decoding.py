@@ -350,6 +350,7 @@ class BeamSearchDecoderWithLM(TokenDecoder):
 
                     # add <endoftext> token's probability, which is </s> in kenlm
                     lm_score.append(self.lm.BaseScore(last_state, "</s>", new_token_state))
+                    print(tokens.device)
                     lm_score = torch.FloatTensor(lm_score, device=tokens.device)
                     
                     # common shallow fusion
