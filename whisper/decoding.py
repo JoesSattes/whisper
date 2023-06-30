@@ -49,7 +49,7 @@ def detect_language(model: "Whisper", mel: Tensor, tokenizer: Tokenizer = None) 
     x = torch.tensor([[tokenizer.sot]] * n_audio).to(mel.device)  # [n_audio, 1]
     logits = model.logits(x, mel)[:, 0]
 
-    logits_device = logits.device
+    # logits_device = logits.device
 
     # collect detected languages; suppress all non-language tokens
     mask = torch.ones(logits.shape[-1], dtype=torch.bool)
@@ -69,7 +69,7 @@ def detect_language(model: "Whisper", mel: Tensor, tokenizer: Tokenizer = None) 
         language_tokens = language_tokens[0]
         language_probs = language_probs[0]
 
-    return language_tokens.to(logits_device), language_probs.to(logits_device)
+    return language_tokens, language_probs
 
 
 @dataclass(frozen=True)
