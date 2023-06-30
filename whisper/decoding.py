@@ -49,6 +49,8 @@ def detect_language(model: "Whisper", mel: Tensor, tokenizer: Tokenizer = None) 
     x = torch.tensor([[tokenizer.sot]] * n_audio).to(mel.device)  # [n_audio, 1]
     logits = model.logits(x, mel)[:, 0]
 
+    logits_device = logits.device
+
     # collect detected languages; suppress all non-language tokens
     mask = torch.ones(logits.shape[-1], dtype=torch.bool)
     mask[list(tokenizer.all_language_tokens)] = False
@@ -67,7 +69,7 @@ def detect_language(model: "Whisper", mel: Tensor, tokenizer: Tokenizer = None) 
         language_tokens = language_tokens[0]
         language_probs = language_probs[0]
 
-    return language_tokens, language_probs
+    return language_tokens.to(logits_device), language_probs.to(logits_device)
 
 
 @dataclass(frozen=True)
@@ -395,6 +397,7 @@ class BeamSearchDecoderWithLM(TokenDecoder):
 
     def finalize(self, preceding_tokens: Tensor, sum_logprobs: Tensor):
         # collect all finished sequences, including patience, and add unfinished ones if not enough
+        sum_logprobs_device = sum_logprobs.device
         sum_logprobs = sum_logprobs.cpu()
         for i, sequences in enumerate(self.finished_sequences):
             if len(sequences) < self.beam_size:  # when not enough sequences are finished
@@ -405,7 +408,7 @@ class BeamSearchDecoderWithLM(TokenDecoder):
                         break
 
         tokens: List[List[Tensor]] = [
-            [torch.tensor(seq) for seq in sequences.keys()] for sequences in self.finished_sequences
+            [torch.tensor(seq).to(sum_logprobs_device) for seq in sequences.keys()] for sequences in self.finished_sequences
         ]
         sum_logprobs: List[List[float]] = [
             list(sequences.values()) for sequences in self.finished_sequences
@@ -485,6 +488,7 @@ class BeamSearchDecoder(TokenDecoder):
 
     def finalize(self, preceding_tokens: Tensor, sum_logprobs: Tensor):
         # collect all finished sequences, including patience, and add unfinished ones if not enough
+        sum_logprobs_device = sum_logprobs.device
         sum_logprobs = sum_logprobs.cpu()
         for i, sequences in enumerate(self.finished_sequences):
             if len(sequences) < self.beam_size:  # when not enough sequences are finished
@@ -495,7 +499,7 @@ class BeamSearchDecoder(TokenDecoder):
                         break
 
         tokens: List[List[Tensor]] = [
-            [torch.tensor(seq) for seq in sequences.keys()] for sequences in self.finished_sequences
+            [torch.tensor(seq).to(sum_logprobs_device) for seq in sequences.keys()] for sequences in self.finished_sequences
         ]
         sum_logprobs: List[List[float]] = [
             list(sequences.values()) for sequences in self.finished_sequences
